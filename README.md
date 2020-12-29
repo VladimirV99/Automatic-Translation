@@ -1,6 +1,6 @@
 # Automatic-Translation
 
-Automatic language translation using LSTM
+Automatic language translation using a sequence-to-sequence LSTM model
 
 ## Required packges
 
@@ -16,6 +16,8 @@ Automatic language translation using LSTM
 - tensorflow
 - pydot
 - nltk
+- scikit-learn
+- matplotlib
 
 ## Datasets
 
@@ -31,3 +33,4 @@ English-to-French translation datasets:
 
 - https://arxiv.org/pdf/1409.3215.pdf
 - https://google.github.io/seq2seq/
+- https://keras.io/examples/nlp/lstm_seq2seq/
