@@ -1,5 +1,5 @@
 .ipynb_checkpoints/
 .vscode/
 datasets/
-model.png
-inference_model.png
+plot/
+model/
