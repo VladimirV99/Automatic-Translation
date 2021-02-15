@@ -19,6 +19,12 @@ Automatic language translation using a sequence-to-sequence LSTM model
 - scikit-learn
 - matplotlib
 
+If you have conda installed, you can create an evironment with all required packages installed by running the following commands
+```bash
+conda env create -f environment.yml
+conda activate translation
+```
+
 ## Datasets
 
 English word list: https://gist.github.com/deekayen/4148741
