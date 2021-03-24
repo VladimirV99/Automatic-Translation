@@ -38,5 +38,8 @@ English-to-French translation datasets:
 ## References
 
 - https://arxiv.org/pdf/1409.3215.pdf
+- https://arxiv.org/pdf/1406.1078.pdf
+- https://arxiv.org/pdf/1609.08144.pdf
 - https://google.github.io/seq2seq/
 - https://keras.io/examples/nlp/lstm_seq2seq/
+- https://nlp.stanford.edu/projects/glove/
