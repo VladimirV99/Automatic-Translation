@@ -27,7 +27,7 @@ conda activate translation
 
 ## Datasets
 
-English word list: https://gist.github.com/deekayen/4148741
+English word list: https://github.com/dwyl/english-words
 
 French word list: http://www.lexique.org/
 
