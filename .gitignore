@@ -4,3 +4,4 @@ datasets/
 model/
 plot/
 *.synctex.gz
+*.log
