@@ -69,14 +69,14 @@ Pre njihove obrade, izbačeni su svi parovi koji imaju isti ulaz a drugačiji pr
 
 Pošto direktna upotreba rečenica u tekstualnom obliku nije pogodna, potrebno je pretvoriti ih u reprezentaciju koja bolje radi sa neuronskom mrežama.
 Prvi korak pretprocesiranja je eliminisanje specijalnih simbola iz rečenica jer nam oni nisu korisni prilikom prevođenja.
-Zatim, kako bi rečenice mogle da se upotrebe kao ulaz neuronske mreze potrebno je predstaviti ih kao niz brojeva. To se radi jednostavnim pridruživanjem broja svakoj reči iz trening skupa ili nekog predefinisanog rečnika u kom slučaju se dodaje i token za nepoznate (out-of-vocabulary) reči. Ovaj proces se naziva tokenzacija i radi se odvojeno za ulaz i izlaz.
+Zatim, kako bi rečenice mogle da se upotrebe kao ulaz neuronske mreže potrebno je predstaviti ih kao niz brojeva. To se radi jednostavnim pridruživanjem broja svakoj reči iz trening skupa ili nekog predefinisanog rečnika u kom slučaju se dodaje i token za nepoznate (out-of-vocabulary) reči. Ovaj proces se naziva tokenzacija i radi se odvojeno za ulaz i izlaz.
 Za velike trening skupove bi bilo bolje ograničiti skup reči na rečnik, ali ovde je korišćen pristup sa svim rečima iz trening skupa.
 
 Originalni papir predlaže dodatno da se za ulazne rečenice obrne redosled tokena u sekvenci zato što se tako bolje očuvaju veze između reči u dužim rečenicama. Zbog kratkih rečenica u trening skupu, ovu tehniku nećemo primeniti, ali je ostavljena kao opcija u kodu.
 
-Dalje, potrebno je napraviti dva tipa izlaznih rečenica, jedan tip predstavlja ulaz u dekoder a drugi predstavlja izlaz. Prva reč koju dekoder treba da dobije je početni (start of sequence) token i on se dodaje na početak svake rečenice koja ulazi u dekoder. Slično, na rečenice koje predstavljaju izlaz iz dekodera potrebno je dodati završni (end of sequence) token.
+Dalje, potrebno je napraviti dva tipa izlaznih rečenica, jedan tip predstavlja ulaz u dekoder a drugi predstavlja izlaz. Prva reč koju dekoder treba da dobije je početni (start of sequence) token i on se dodaje na početak svake rečenice koja ulazi u dekoder. Slično, na rečenice koje predstavljaju izlaz iz dekodera potrebno je na kraju dodati završni (end of sequence) token.
 
-Sve sekvence iz respektivnih skupova se potom dopunjavaju "praznim" tokenima tako da budu iste dužine. Pri tome, ulazne sekvence se dopunjuju sa leve strane jer se konačan rezultat dobija pri izlazu poslednjeg tokena, a izlazne sekvence se dopunjuju sa desne strane jer njihova obrada počinje prvim tokenom.
+Sve sekvence iz respektivnih skupova se potom dopunjavaju 'praznim' tokenima tako da budu iste dužine. Pri tome, ulazne sekvence se dopunjuju sa leve strane jer se konačan rezultat dobija pri izlazu poslednjeg tokena, a izlazne sekvence se dopunjuju sa desne strane jer njihova obrada počinje prvim tokenom.
 Ovim smo dobili skup ulazno-izlaznih sekvenci koje mogu da se koriste za treniranje neuronske mreže.
 
 \subsection{Enkoder}
@@ -84,18 +84,19 @@ Ovim smo dobili skup ulazno-izlaznih sekvenci koje mogu da se koriste za trenira
 Enkoder je zadužen da na osnovu dobijene sekvence generiše reprezentaciju fiksne dužine koja bi trebalo da sadrži sve informacije potrebne da se konstruiše prevod na ciljnom jeziku.
 
 Ulaz u enkoder je tensor dimenzije $n \times m$ gde je $n$ broj rečenica, a $m$ dužina ulazne sekvence. On je vezan za embedding sloj koji svakoj reci dodeljuje vektor fiksne dužine tako da udaljenost između vektora zavisi od značenja reči.
-Umesto da model uči te reprezentacije za vreme treninga, koristimo \href{https://nlp.stanford.edu/projects/glove/}{GloVe} model \cite{pennington2014glove} treniran na 5 milijardi reči sa vikipedije gde je svaka reč prestavljena vektorom dužine 100. 
-Embedding sloj je zatim vezan na LSTM sloj dimenzije 512 koji se inicijalizuje nasumičnim vrednostima iz uniformne raspodele na intervalu $[-0.08, 0.08]$. Kao izlaz iz ovog sloja se dobija njegovo interno stanje na kraju koje prestavlja novu reprezentaciju ulazne rečenice.
+Umesto da model uči te reprezentacije za vreme treninga, koristimo težine iz \href{https://nlp.stanford.edu/projects/glove/}{GloVe} modela \cite{pennington2014glove} treniranog na 5 milijardi reči sa vikipedije gde je svaka reč prestavljena vektorom dužine 100. 
+Embedding sloj je zatim vezan na LSTM sloj dimenzije 512 koji se inicijalizuje nasumičnim vrednostima iz uniformne raspodele na intervalu $[-0.08, 0.08]$.
+Nakon prolaska svih tokena iz rečenice kroz ovaj sloj, kao izlaz se dobija njegovo interno stanje koje prestavlja novu reprezentaciju ulazne rečenice.
 
 \subsection{Dekoder}
 
 Dekoder koristi svoje unutrašnje stanje i prethodno generisanu reč kako bi odredio sledeću reč u rečenici.
 
 Po strukturi, dekoder je veoma sličan enkoderu.
-Ulazni sloj sada ima drugu dimenziju jednaku dužini izlazne sekvence dok embedding i LSTM slojevi ostaju nepromenjeni osim sto težine za embedding sloj neće biti unapred zadate nego će se učiti u toku treniranja.
+Ulazni sloj sada ima drugu dimenziju jednaku dužini izlazne sekvence dok embedding i LSTM slojevi ostaju nepromenjeni osim što težine za embedding sloj neće biti unapred zadate nego će se učiti u toku treniranja.
 Na kraju se nadovezuje na potpuno povezani sloj sa softmax aktivacijom koji određuje verovatnoću za svaku reč na ciljnom jeziku.
 
-Inicijalno se kao unutrašnje stanje koristi izlaz iz enkodera, a kao prethodno generisanu rec uzimamo početni (\textless sos\textgreater) token koji je uveden prilikom pretprocesiranja. Dekodiranje se prekida ili kada se dobije završni (\textless eos\textgreater) token ili dok se ne dostigne zadata maksimalna dužina rečenice.
+Inicijalno se kao unutrašnje stanje koristi izlaz iz enkodera, a kao prethodno generisanu reč uzimamo početni (\textless sos\textgreater) token koji je uveden prilikom pretprocesiranja. Dekodiranje se prekida ili kada se dobije završni (\textless eos\textgreater) token ili dok se ne dostigne zadata maksimalna dužina rečenice.
 
 \subsection{Model}
 
@@ -112,7 +113,8 @@ Optimizator koji koristimo je \textit{rmsprop}, funkcija gubitka je kategorijska
 
 \subsection{Trening}
 
-Opisani model je treniran na 50.000 parova rečenica na engleskom i francuskom jeziku iz skupa preuzetog sa \cite{manythings}. Trening je trajao 5 epoha sa veličinom grupe od 128 instanci i 10\% skupa je korišćeno za validaciju. Pošto ceo skup obrađenih podataka ne moze da stane u radnu memoriju za veće brojeve rečenica, korišćen je generator da se grupe rečenica konstruišu tek kada su potrebne.
+Opisani model je treniran na 50.000 parova rečenica na engleskom i francuskom jeziku iz skupa preuzetog sa \cite{manythings}. Trening je trajao 5 epoha sa veličinom grupe od 128 instanci i 10\% skupa je korišćeno za validaciju.
+Pošto ceo skup obrađenih podataka ne može da stane u radnu memoriju za veće brojeve rečenica, korišćen je generator da se grupe rečenica konstruišu tek kada su potrebne.
 
 Za treniranje je korišćena \href{https://colab.research.google.com/}{Google Colaboratory} platforma i trajalo je 2 sata.
 
@@ -140,7 +142,7 @@ Formalno, algoritam maksimizira vrednost funkcije
 $$\arg\max_{y} \prod_{t=1}^{T_y} P(y^{<t>}|X, y^{<1>}, y^{<2>}, ..., y^{<t-1>})$$
 Kako su sve verovatnoće između 0 i 1, prethodni proizvod brzo postaje veoma mali broj. Zbog toga se umesto običnog proizvoda koristi suma logaritama.
 $$\arg\max_{y} \sum_{t=1}^{T_y} \log P(y^{<t>}|X, y^{<1>}, y^{<2>}, ..., y^{<t-1>})$$
-Sada kako je suma logaritama strogo rastuća funkcija, prethodna formula favorizuje što duže rečenice. Da bi kompenzovali za ovo, normalizovaćemo formulu tako što je podelimo sa brojem reči u prevodu. Ovo je konačna formula koju koristimo.
+Prethodna suma se smanjuje povećenjem broja sabiraka jer je logaritam broja manjeg od 1 negativan, pa formula favorizuje kraće rečenice. Da bi kompenzovali za ovo, normalizovaćemo je tako što je podelimo sa brojem reči u prevodu. Ovo je konačna formula koju koristimo.
 $$\arg\max_{y} \frac{1}{T_y} \sum_{t=1}^{Ty} \log P(y^{<t>}|X, y^{<1>}, y^{<2>}, ..., y^{<t-1>})$$
 
 Od izbora parametra $k$ zavisi koliko potencijalnih prevoda će biti razmatrano i time celokupni kvalitet prevoda. Što je parametar veći, više izbora se razmatra ali se vreme za dobijanje prevoda ekponencijalno povećava. U implementaciji je korišćena vrednost $k = 3$. Više detalja se može naći u \cite{Freitag_2017} i \cite{aritificial2009}.
@@ -205,7 +207,7 @@ U nastavku su prikazani primeri prevoda rečenica iz trening skupa gramzivim i b
 
 Može se primetiti da je model počeo da povezuje reči na engleskom sa rečima na francuskom, pa čak nekada i zamenjuje reč nekom sličnom, ali za reči koje očekujemo da se retko javljaju u skupu za treniranje često daje neku drugu nasumičnu reč ili potpuno izgubi smisao.
 
-U narednim tabelama se nalaze primeri prevoda rečenica koje nisu iz trening skupa poređane po kompleksnosti od jedne reči do komplikovanijih rečenica.
+U narednim tabelama se nalaze primeri prevoda rečenica koje nisu iz trening skupa poređanih od jednostavnih do komplikovanijih.
 
 \translation
 {You}
@@ -245,9 +247,9 @@ U narednim tabelama se nalaze primeri prevoda rečenica koje nisu iz trening sku
   \end{tabularx}
 \end{center}}
 
-BLEU (The Bilingual Evaluation Understudy) ocena je mera za ocenu kvaliteta mašinskog prevoda tako što ga poredi sa ljudski generisanim prevodima. Ocena ima vrednost iz opsega 0 do 1 gde 0 predstavlja potpuno pogrešan, a 1 savršen prevod.
+BLEU (The Bilingual Evaluation Understudy) ocena je mera za kvalitet mašinskog prevoda dobijena tako što poredi mašinski prevod sa nekim brojem prevoda koje su napisali ljudi. Ocena ima vrednost iz opsega od 0 do 1 gde 0 predstavlja potpuno pogrešan, a 1 savršen prevod.
 
-U nastavku su tabele sa nasumično izabranim recenicama iz trening skupa i njihove ocene.
+U nastavku su tabele sa nasumično izabranim rečenicama iz trening skupa i njihove ocene.
 
 \translationscore
 {You're polite.}
@@ -276,8 +278,8 @@ U nastavku su tabele sa nasumično izabranim recenicama iz trening skupa i njiho
 {je n'ai pas dormi}{$1.0$}
 
 Vidimo da u velikom broju slučajeva ocena prevoda je blizu 0 što je i očekivano jer se ocenjivanje vrši na osnovu preklapanja n-grama a model osim što radi sa kratkim rečenicama obično pogreši bar jednu reč.
-Prve dve rečenice imaju pogrešno prevedenu po jednu reč, u trećoj nedostaje jedna, u četvrtoj je upotrebljeno pogresno vreme glagola dok je poslednja potpuno tačna.
-Donekle iznenađujuće, sve rečenice su gramatički ispravne.
+Prve dve rečenice imaju pogrešno prevedenu po jednu reč, u trećoj je izostavljena jedna reč, u četvrtoj je upotrebljeno pogresno vreme glagola, dok je poslednja rečenica potpuno tačna.
+Donekle iznenađujuće, sve rečenice su sintaksički ispravne.
 
 % Zaključak treba da sadrži kritički osvrt na sve što je urađeno i eventualne pravce daljeg unapređivanja.
 \section{Zaključak}
